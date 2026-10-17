@@ -33,6 +33,10 @@ jobs:
         # Covers /help, /auth/register, Navbar, Button, Input, Dialog.
         # Exceptions are tracked in docs/accessibility/known-violations.md.
 
+      - name: Run design-token colour contrast gate (issue #371)
+        run: ./node_modules/.bin/jest src/styles/__tests__/contrast.test.ts --no-coverage
+        # Fails if any text/background token pair in tokens.css drops below WCAG AA 4.5:1.
+
       - name: Upload axe results artifact
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
