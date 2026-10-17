@@ -5,6 +5,10 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+    paths:
+      - "src/**"
+      - ".github/workflows/accessibility.yml"
+      - "docs/accessibility/known-violations.md"
 
 concurrency:
   group: a11y-${{ github.ref }}
@@ -14,6 +18,9 @@ jobs:
   axe-audit:
     name: axe-core Accessibility Audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -25,10 +32,13 @@ jobs:
       - run: npm ci --legacy-peer-deps
 
       - name: Run accessibility tests (existing routes)
+        id: axe
         run: ./node_modules/.bin/jest src/app/__tests__/accessibility.test.tsx --no-coverage --json --outputFile=axe-results.json
         # Exit code non-zero if any critical/serious violation is found (test throws)
 
       - name: Run accessibility regression gates (all routes — issue #128)
+        id: axe-routes
+        if: always()
         run: ./node_modules/.bin/jest src/app/__tests__/accessibility-routes.test.tsx --no-coverage --json --outputFile=axe-routes-results.json
         # Covers /help, /auth/register, Navbar, Button, Input, Dialog.
         # Exceptions are tracked in docs/accessibility/known-violations.md.
@@ -42,3 +52,25 @@ jobs:
             axe-results.json
             axe-routes-results.json
           retention-days: 30
+
+      - name: Post results as PR comment
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "## ♿ Accessibility audit"
+            echo
+            echo "| Suite | Result |"
+            echo "|---|---|"
+            echo "| Existing routes | ${{ steps.axe.outcome }} |"
+            echo "| All routes (regression gates) | ${{ steps.axe-routes.outcome }} |"
+            echo
+            echo "Baseline exceptions are tracked in \`docs/accessibility/known-violations.md\`."
+            for f in axe-results.json axe-routes-results.json; do
+              [ -f "$f" ] || continue
+              jq -r '.testResults[].assertionResults[] | select(.status=="failed")
+                | "<details><summary>❌ \(.fullName)</summary>\n\n```\n\(.failureMessages | join("\n") | .[0:3000])\n```\n</details>"' "$f"
+            done
+          } > a11y-comment.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file a11y-comment.md
