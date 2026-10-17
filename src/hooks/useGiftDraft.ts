@@ -30,6 +30,8 @@ export interface GiftDraft {
   message?: string;
   unlockAt?: string;
   templateId?: string;
+  /** Selected payment provider — not sensitive, just the user's choice */
+  paymentProvider?: "paystack" | "stripe";
 }
 
 function safeParse(raw: string | null): GiftDraft | null {

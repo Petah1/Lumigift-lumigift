@@ -87,3 +87,58 @@ export async function sendGiftInvitation(
     api_key: serverConfig.termii.apiKey,
   });
 }
+
+/**
+ * Sends an upcoming-occasion reminder with a deep link to start a new gift.
+ *
+ * @param phone - E.164-formatted destination phone number.
+ * @param contactName - User-chosen label for the contact (e.g. "Mum").
+ * @param label - Occasion label (e.g. "Birthday").
+ * @param occasionId - Used to build the deep link and opt-out link.
+ */
+export async function sendOccasionReminder(
+  phone: string,
+  contactName: string,
+  label: string,
+  occasionId: string
+): Promise<void> {
+  const giftLink = `${serverConfig.app.url}/send?recipientName=${encodeURIComponent(contactName)}&occasion=${encodeURIComponent(occasionId)}`;
+
+  await termiiClient.post("/sms/send", {
+    to: phone,
+    from: serverConfig.termii.senderId,
+    sms:
+      `Reminder: ${contactName}'s ${label} is in 7 days! 🎉\n` +
+      `Send a Lumigift: ${giftLink}\n` +
+      `Manage reminders: ${serverConfig.app.url}/dashboard/occasions`,
+    type: "plain",
+    channel: "generic",
+    api_key: serverConfig.termii.apiKey,
+  });
+}
+
+/**
+ * Notifies a gift sender that the recipient reacted to their gift.
+ *
+ * @param phone - Sender's E.164-formatted phone number.
+ * @param recipientName - Recipient name as entered on the gift.
+ * @param emoji - The reaction emoji.
+ * @param giftId - Used to link to the sender's gift detail view.
+ */
+export async function sendGiftReactionNotification(
+  phone: string,
+  recipientName: string,
+  emoji: string,
+  giftId: string
+): Promise<void> {
+  await termiiClient.post("/sms/send", {
+    to: phone,
+    from: serverConfig.termii.senderId,
+    sms:
+      `${recipientName} reacted ${emoji} to your Lumigift!\n` +
+      `See their note: ${serverConfig.app.url}/gifts/${giftId}`,
+    type: "plain",
+    channel: "generic",
+    api_key: serverConfig.termii.apiKey,
+  });
+}

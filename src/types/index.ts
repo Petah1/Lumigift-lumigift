@@ -21,6 +21,13 @@ export type GiftStatus =
   | "expired"
   | "cancelled";
 
+/** Recipient's one-time reaction to a claimed gift (issue #343). */
+export interface GiftReactionSummary {
+  emoji: string;
+  message?: string;
+  createdAt: Date;
+}
+
 export interface Gift {
   id: string;
   senderId: string;
@@ -39,6 +46,7 @@ export interface Gift {
   claimTxHash?: string; // claim transaction hash
   cancelledAt?: Date; // set when the sender cancels the gift
   refundStatus?: RefundStatus; // refund progress after cancellation
+  reaction?: GiftReactionSummary; // recipient's thank-you reaction (issue #343)
   createdAt: Date;
   updatedAt: Date;
 }

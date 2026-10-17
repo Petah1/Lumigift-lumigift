@@ -82,9 +82,9 @@ export const POST = withErrorHandler(
         );
       }
 
-    const validation = await validateBody(req, createGiftSchema);
-    if (!validation.success) return validation.response;
-    const parsed = validation;
+      const validation = await validateBody(req, createGiftSchema);
+      if (!validation.success) return validation.response;
+      const parsed = validation;
 
       const userId = (session.user as { id: string }).id;
       const idempotencyKey = req.headers.get(IDEMPOTENCY_KEY_HEADER);
@@ -120,15 +120,15 @@ export const POST = withErrorHandler(
       }
       // ─────────────────────────────────────────────────────────────────────────
 
-      const { gift, paymentUrl } = await createGift(
+      const { gift, paymentUrl, clientSecret } = await createGift(
         userId,
         parsed.data,
         parsed.data.recipientIsRegistered
       );
 
-      const responseBody: ApiResponse<{ gift: Gift; paymentUrl: string }> = {
+      const responseBody: ApiResponse<{ gift: Gift; paymentUrl: string; clientSecret?: string }> = {
         success: true,
-        data: { gift, paymentUrl },
+        data: { gift, paymentUrl, clientSecret },
       };
 
       // Store the response only when an idempotency key was provided

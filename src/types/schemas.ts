@@ -63,3 +63,27 @@ export type CreateGiftInput = z.infer<typeof createGiftSchema>;
 export type CreateGiftFormInput = z.input<typeof createGiftSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 export type ClaimGiftInput = z.infer<typeof claimGiftSchema>;
+
+// ─── Occasions (issue #341) ─────────────────────────────────────────────────────
+
+export const createOccasionSchema = z.strictObject({
+  contactName: z.string().trim().min(1, "Contact name is required").max(60),
+  label: z.string().trim().min(1, "Occasion is required").max(60),
+  occasionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
+});
+
+export const updateOccasionSchema = z.strictObject({
+  remindersEnabled: z.boolean(),
+});
+
+// ─── Gift reactions (issue #343) ────────────────────────────────────────────────
+
+export const ALLOWED_REACTIONS = ["❤️", "😍", "🎉", "🙏", "😂", "🥹"] as const;
+
+export const giftReactionSchema = z.strictObject({
+  emoji: z.enum(ALLOWED_REACTIONS),
+  message: z.string().max(280, "Message cannot exceed 280 characters").optional(),
+});
+
+export type CreateOccasionInput = z.infer<typeof createOccasionSchema>;
+export type GiftReactionInput = z.infer<typeof giftReactionSchema>;
