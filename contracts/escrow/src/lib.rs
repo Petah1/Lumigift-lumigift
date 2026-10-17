@@ -70,6 +70,8 @@ pub enum EscrowError {
     /// The supplied token address is not an allowed USDC contract for this
     /// network. Only the canonical Circle USDC addresses are permitted.
     InvalidToken       = 9,
+    /// The sender's USDC balance is lower than the requested deposit amount.
+    InsufficientBalance = 10,
 }
 
 // ─── Allowed token addresses ──────────────────────────────────────────────────
@@ -283,6 +285,14 @@ impl EscrowContract {
 
         sender.require_auth();
 
+        // Pre-condition: the sender must hold enough USDC for the deposit.
+        // Checked in the same invocation as the transfer below, so a failure
+        // here reverts atomically before any state is written.
+        let token_client = token::Client::new(&env, &token);
+        if token_client.balance(&sender) < amount {
+            return Err(EscrowError::InsufficientBalance);
+        }
+
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::Sender, &sender);
         env.storage().instance().set(&DataKey::Recipient, &recipient);
@@ -296,7 +306,6 @@ impl EscrowContract {
         let ttl = required_ttl_ledgers(&env, unlock_time);
         env.storage().instance().extend_ttl(MIN_TTL_THRESHOLD, ttl);
 
-        let token_client = token::Client::new(&env, &token);
         token_client.transfer(&sender, &env.current_contract_address(), &amount);
 
         env.events().publish(
@@ -678,6 +687,29 @@ mod tests {
 
         let err = client.try_get_state().unwrap_err().unwrap();
         assert_eq!(err, EscrowError::NotInitialized);
+    }
+
+    #[test]
+    fn test_initialize_insufficient_balance_returns_error() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let sender = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let (token_id, token, token_admin) = create_token(&env, &sender);
+
+        token_admin.mint(&sender, &50_000_000);
+
+        let contract_id = env.register_contract(None, EscrowContract);
+        let client = EscrowContractClient::new(&env, &contract_id);
+
+        let err = client
+            .try_initialize(&sender, &sender, &recipient, &token_id, &100_000_000, &3_601)
+            .unwrap_err()
+            .unwrap();
+        assert_eq!(err, EscrowError::InsufficientBalance);
+        assert_eq!(token.balance(&sender), 50_000_000);
+        assert!(client.try_get_state().is_err());
     }
 
     #[test]
