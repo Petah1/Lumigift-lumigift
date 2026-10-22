@@ -145,15 +145,15 @@ export const POST = withErrorHandler(
       }
       // ─────────────────────────────────────────────────────────────────────────
 
-      const { gift, paymentUrl } = await createGift(
+      const { gift, paymentUrl, clientSecret } = await createGift(
         userId,
         parsed.data,
         parsed.data.recipientIsRegistered
       );
 
-      const responseBody: ApiResponse<{ gift: Gift; paymentUrl: string }> = {
+      const responseBody: ApiResponse<{ gift: Gift; paymentUrl: string; clientSecret?: string }> = {
         success: true,
-        data: { gift, paymentUrl },
+        data: { gift, paymentUrl, clientSecret },
       };
 
       await storeIdempotencyResponse(

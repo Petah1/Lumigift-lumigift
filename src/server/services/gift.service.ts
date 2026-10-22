@@ -14,6 +14,16 @@ import { sendGiftReceivedEmail } from "@/lib/email";
 import type { GiftCursorPosition } from "./gift-cursor";
 import { incrementFunnelCounter, recordFunnelTransition } from "@/lib/metrics";
 
+let _stripe: Stripe | null = null;
+function getStripe(): Stripe {
+  if (!_stripe) {
+    _stripe = new Stripe(serverConfig.stripe.secretKey ?? "", {
+      apiVersion: "2026-04-22.dahlia",
+    });
+  }
+  return _stripe;
+}
+
 // ─── Exchange rate helper ─────────────────────────────────────────────────────
 import { getExchangeRate, lockExchangeRate } from "@/server/services/exchange-rate.service";
 
@@ -54,14 +64,15 @@ function activeGifts(): Gift[] {
  * @param senderId - The authenticated user's ID.
  * @param input - Validated gift creation input (recipient, amount, unlock date, etc.).
  * @param recipientIsRegistered - Whether the recipient is already registered on Lumigift.
- * @returns The created {@link Gift} and the Paystack `paymentUrl` to redirect the user to.
+ * @returns The created {@link Gift} and either the Paystack `paymentUrl` to redirect the user to
+ *   or, for Stripe, the PaymentIntent `clientSecret` for the embedded Payment Element.
  * @throws If the exchange rate fetch or Paystack initialization fails.
  */
 export async function createGift(
   senderId: string,
   input: CreateGiftInput,
   recipientIsRegistered: boolean = true
-): Promise<{ gift: Gift; paymentUrl: string }> {
+): Promise<{ gift: Gift; paymentUrl: string; clientSecret?: string }> {
   // ── Daily sending limit check ──────────────────────────────────────────────
   const { dailyLimitNgn } = serverConfig.giftLimits;
   const todayStart = new Date();
@@ -154,14 +165,6 @@ export async function createGift(
     }
   }
 
-  const payment = await initializePayment({
-    email: `${senderId}@lumigift.app`, // placeholder; use real email from user record
-    amountKobo: ngnToKobo(input.amountNgn),
-    reference: paymentReference,
-    callbackUrl: `${serverConfig.app.url}/api/payments/callback?giftId=${id}`,
-    metadata: { giftId: id, senderId },
-  });
-
   // Send email notification if recipient email is available (optional field)
   if (input.recipientEmail) {
     sendGiftReceivedEmail(input.recipientEmail, {
@@ -169,6 +172,29 @@ export async function createGift(
       unlockAt: new Date(input.unlockAt),
     }).catch((err: unknown) => console.error("[email] gift_received failed:", err));
   }
+
+  // International payments use Stripe embedded Payment Element — return the
+  // PaymentIntent client secret instead of a hosted checkout URL.
+  if (input.paymentProvider === "stripe") {
+    const intent = await getStripe().paymentIntents.create(
+      {
+        amount: Math.round(Number(amountUsdc) * 100),
+        currency: "usd",
+        automatic_payment_methods: { enabled: true },
+        metadata: { giftId: id, senderId, reference: paymentReference },
+      },
+      { idempotencyKey: paymentReference }
+    );
+    return { gift, paymentUrl: "", clientSecret: intent.client_secret ?? undefined };
+  }
+
+  const payment = await initializePayment({
+    email: `${senderId}@lumigift.app`, // placeholder; use real email from user record
+    amountKobo: ngnToKobo(input.amountNgn),
+    reference: paymentReference,
+    callbackUrl: `${serverConfig.app.url}/api/payments/callback?giftId=${id}`,
+    metadata: { giftId: id, senderId },
+  });
 
   return { gift, paymentUrl: payment.authorizationUrl };
 }

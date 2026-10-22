@@ -10,6 +10,7 @@ import { giftThemeStyle } from "@/lib/giftThemes";
 import { ClaimButton } from "./ClaimButton";
 import { ShareGift } from "./ShareGift";
 import { CancelGiftButton, RefundStatusNotice } from "./CancelGiftButton";
+import { GiftReactionForm } from "./GiftReactionForm";
 import styles from "./GiftCard.module.css";
 
 interface GiftCardProps {
@@ -107,6 +108,19 @@ export function GiftCard({ gift, perspective, recipientStellarKey }: GiftCardPro
             themeId={gift.themeId}
           />
         </div>
+      )}
+
+      {perspective === "recipient" && status === "claimed" && (
+        <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+          <GiftReactionForm giftId={gift.id} existing={gift.reaction} />
+        </div>
+      )}
+
+      {perspective === "sender" && gift.reaction && (
+        <p className={styles.reaction} aria-label="Recipient reaction">
+          <span aria-hidden="true">{gift.reaction.emoji}</span>
+          {gift.reaction.message && <> &ldquo;{gift.reaction.message}&rdquo;</>}
+        </p>
       )}
 
       {perspective === "sender" && (status === "locked" || status === "funded") && (

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getGiftById, hashPhone } from "@/server/services/gift.service";
 import { cancelGiftForSender } from "@/server/services/cancellation.service";
+import { getReaction } from "@/server/services/reaction.service";
 import { withErrorHandler, withCsrf } from "@/server/middleware";
 import type { ApiResponse, Gift } from "@/types";
 
@@ -47,6 +48,14 @@ export const GET = withErrorHandler(async (_req: NextRequest, context: unknown) 
 
   // Sender or recipient gets the full gift (minus phone hash)
   const { recipientPhoneHash: _omit, ...fullGift } = gift;
+  const reaction = gift.status === "claimed" ? await getReaction(gift.id) : null;
+  if (reaction) {
+    fullGift.reaction = {
+      emoji: reaction.emoji,
+      message: reaction.message,
+      createdAt: reaction.createdAt,
+    };
+  }
   return NextResponse.json<ApiResponse<Omit<Gift, "recipientPhoneHash">>>({
     success: true,
     data: fullGift,
