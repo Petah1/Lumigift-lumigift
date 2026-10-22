@@ -24,14 +24,14 @@
   /* Text */
   --color-text-primary: #f0f0f5;
   --color-text-secondary: #9898b0;
-  --color-text-muted: #5a5a72;
+  --color-text-muted: #8a8aa3;
   --color-text-inverse: #0d0d14;
 
   /* Semantic */
   --color-success: #22c55e;
   --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-info: #3b82f6;
+  --color-error: #f87171;
+  --color-info: #60a5fa;
 
   /* Typography */
   --font-sans: var(--font-inter, "Inter"), system-ui, -apple-system, sans-serif;
@@ -112,8 +112,14 @@
 
   --color-text-primary: #0d0d14;
   --color-text-secondary: #4a4a62;
-  --color-text-muted: #8888a0;
+  --color-text-muted: #62627a;
   --color-text-inverse: #f0f0f5;
+
+  /* Darker status colours keep ≥ 4.5:1 on light backgrounds (#371) */
+  --color-success: #166534;
+  --color-warning: #92400e;
+  --color-error: #b91c1c;
+  --color-info: #1d4ed8;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -135,8 +141,20 @@
 
     --color-text-primary: #0d0d14;
     --color-text-secondary: #4a4a62;
-    --color-text-muted: #8888a0;
+    --color-text-muted: #62627a;
     --color-text-inverse: #f0f0f5;
+
+    /* Darker status colours keep ≥ 4.5:1 on light backgrounds (#371) */
+    --color-success: #166534;
+    --color-warning: #92400e;
+    --color-error: #b91c1c;
+    --color-info: #1d4ed8;
+
+    /* Darker status colours keep ≥ 4.5:1 on light backgrounds (#371) */
+    --color-success: #166534;
+    --color-warning: #92400e;
+    --color-error: #b91c1c;
+    --color-info: #1d4ed8;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
