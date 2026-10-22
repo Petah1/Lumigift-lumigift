@@ -19,37 +19,25 @@ the CI blocking check, along with justification and the ticket tracking the fix.
 
 ---
 
-## Resolved — colour contrast in design tokens (Issue #371)
+## Route coverage (Issue #293)
 
-All text/background token pairs in `src/styles/tokens.css` now meet WCAG 2.1 AA
-(4.5:1 for normal text). The check is enforced in CI by
-`src/styles/__tests__/contrast.test.ts` (accessibility workflow).
+The following routes are now audited automatically by jest-axe (component level)
+and `@axe-core/playwright` (full-page E2E) in CI:
 
-| Theme | Token                | Before → After        | Min ratio (worst background) |
-| ----- | -------------------- | --------------------- | ---------------------------- |
-| Dark  | `--color-text-muted` | `#5a5a72` → `#8a8aa3` | 2.46 → 4.90                  |
-| Dark  | `--color-error`      | `#ef4444` → `#f87171` | 4.38 → 5.96                  |
-| Dark  | `--color-info`       | `#3b82f6` → `#60a5fa` | 4.48 → 6.48                  |
-| Light | `--color-text-muted` | `#8888a0` → `#62627a` | 2.99 → 5.13                  |
-| Light | `--color-success`    | `#22c55e` → `#166534` | 1.97 → 6.17                  |
-| Light | `--color-warning`    | `#f59e0b` → `#92400e` | 1.86 → 6.14                  |
-| Light | `--color-error`      | `#ef4444` → `#b91c1c` | 3.26 → 5.60                  |
-| Light | `--color-info`       | `#3b82f6` → `#1d4ed8` | 3.18 → 5.80                  |
+| Route                 | jest-axe file                       | Playwright spec                 |
+| --------------------- | ----------------------------------- | ------------------------------- |
+| `/`                   | `accessibility.test.tsx`            | `e2e/accessibility-axe.spec.ts` |
+| `/send`               | `accessibility.test.tsx`            | `e2e/accessibility-axe.spec.ts` |
+| `/dashboard`          | `accessibility.test.tsx`            | `e2e/accessibility-axe.spec.ts` |
+| `/auth/login`         | `accessibility.test.tsx`            | `e2e/accessibility-axe.spec.ts` |
+| `/auth/register`      | `accessibility-routes.test.tsx`     | `e2e/accessibility-axe.spec.ts` |
+| `/help`               | `accessibility-routes.test.tsx`     | `e2e/accessibility-axe.spec.ts` |
+| `/notifications`      | `accessibility-all-routes.test.tsx` | `e2e/accessibility-axe.spec.ts` |
+| `/claim`              | `accessibility-all-routes.test.tsx` | `e2e/accessibility-axe.spec.ts` |
+| Navbar                | `accessibility-routes.test.tsx`     | —                               |
+| Button, Input, Dialog | `accessibility-routes.test.tsx`     | —                               |
 
-### Palette contrast ratios (against `--color-bg` / `--color-bg-surface` / `--color-bg-elevated`)
-
-| Token                    | Dark                  | Light                 |
-| ------------------------ | --------------------- | --------------------- |
-| `--color-text-primary`   | 17.04 / 15.82 / 14.51 | 17.81 / 19.36 / 16.76 |
-| `--color-text-secondary` | 6.87 / 6.38 / 5.85    | 7.90 / 8.58 / 7.43    |
-| `--color-text-muted`     | 5.76 / 5.34 / 4.90    | 5.45 / 5.92 / 5.13    |
-| `--color-success`        | 8.50 / 7.89 / 7.23    | 6.56 / 7.13 / 6.17    |
-| `--color-warning`        | 9.01 / 8.37 / 7.67    | 6.52 / 7.09 / 6.14    |
-| `--color-error`          | 7.00 / 6.50 / 5.96    | 5.95 / 6.47 / 5.60    |
-| `--color-info`           | 7.61 / 7.07 / 6.48    | 6.17 / 6.70 / 5.80    |
-
-`--color-brand-primary` is used as a button/background colour with
-`--color-text-inverse` (≈ 5:1), not as body text.
+_Added 2026-10-20 — Issue #293_
 
 ---
 
